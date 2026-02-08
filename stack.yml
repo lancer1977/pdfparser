@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  pdf-watcher:
+    image: polyhydra/poppler-watcher:1.0
+    volumes:
+      - /volume1/docker/pdf:/work
+    environment:
+      # Folder layout under /work:
+      #   /work/in        <- drop PDFs here
+      #   /work/out       <- extracted images go here
+      #   /work/archive   <- processed PDFs moved here
+      #   /work/failed    <- PDFs that error move here
+      - INPUT_DIR=/work/in
+      - OUTPUT_DIR=/work/out
+      - ARCHIVE_DIR=/work/archive
+      - FAILED_DIR=/work/failed
+      # How long to wait after last write before processing (seconds)
+      - STABLE_SECONDS=2
+      # Extract mode:
+      #   images  -> pdfimages -all (extract embedded images)
+      #   pages   -> pdftoppm -png  (render each page to images)
+      - MODE=images
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 10
+      # IMPORTANT: If /volume1 exists only on a specific Swarm node,
+      # pin this service to that node. Replace "nas-node" with your node hostname.
+      # placement:
+      #   constraints:
+      #     - node.hostname == nas-node
