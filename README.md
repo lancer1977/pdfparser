@@ -39,3 +39,9 @@ This watcher supports:
 docker build -t polyhydra/poppler-watcher:1.2 .
 docker stack deploy -c stack.yml pdf
 ```
+
+
+## 📖 Documentation
+Detailed documentation can be found in the following sections:
+- [Feature Index](./docs/features/README.md)
+- [Core Capabilities](./docs/features/core-capabilities.md)
