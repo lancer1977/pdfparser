@@ -8,6 +8,15 @@ This watcher supports:
 - **images**: extract embedded image objects, then **organize + filter**
 - **both**: do both
 
+## Tags
+
+- pdfparser
+- docs
+- obs
+- docker
+- ui
+- mod
+
 ## Folder layout (under `/volume1/docker/pdf` mounted to `/work`)
 - `/work/in` — drop PDFs here
 - `/work/out` — outputs go here (one subfolder per PDF)
