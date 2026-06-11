@@ -5,6 +5,8 @@
     OUTPUT_DIR="${OUTPUT_DIR:-/work/out}"
     ARCHIVE_DIR="${ARCHIVE_DIR:-/work/archive}"
     FAILED_DIR="${FAILED_DIR:-/work/failed}"
+    ARCHIVE_RETENTION_DAYS="${ARCHIVE_RETENTION_DAYS:-30}"
+    FAILED_RETENTION_DAYS="${FAILED_RETENTION_DAYS:-14}"
 
     STABLE_SECONDS="${STABLE_SECONDS:-2}"
 
@@ -30,6 +32,17 @@
     log() { echo "[$(date -Iseconds)] $*"; }
 
     sha256() { sha256sum "$1" | awk '{print $1}'; }
+
+    cleanup_retention() {
+        local dir="$1"
+        local days="$2"
+
+        if [[ -z "$days" || "$days" -le 0 ]]; then
+            return 0
+        fi
+
+        find "$dir" -mindepth 1 -mtime +"$days" -exec rm -rf {} + 2>/dev/null || true
+    }
 
     # Wait until file hasn't changed size/mtime for STABLE_SECONDS.
     wait_until_stable() {
@@ -74,15 +87,15 @@
         local pdf="$2"
         local pdf_sha="$3"
         cat > "$out_dir/.done.json" <<EOF
-    {
-      "pdf": "$(basename "$pdf")",
-      "pdf_sha256": "$pdf_sha",
-      "mode": "$MODE",
-      "renderer": "$RENDERER",
-      "dpi": "$DPI",
-      "processed_at": "$(date -Iseconds)"
-    }
-    EOF
+{
+  "pdf": "$(basename "$pdf")",
+  "pdf_sha256": "$pdf_sha",
+  "mode": "$MODE",
+  "renderer": "$RENDERER",
+  "dpi": "$DPI",
+  "processed_at": "$(date -Iseconds)"
+}
+EOF
     }
 
     render_pages() {
@@ -224,10 +237,12 @@
             write_done_marker "$out_dir" "$pdf" "$pdf_sha"
             log "Success: wrote outputs to $out_dir"
             mv -f "$pdf" "$ARCHIVE_DIR/$base_name"
+            cleanup_retention "$ARCHIVE_DIR" "$ARCHIVE_RETENTION_DAYS"
         else
             log "No outputs produced (rc=$rc). Moving to failed."
             mv -f "$pdf" "$FAILED_DIR/$base_name"
             echo "No outputs created. Try MODE=pages or increase DPI." > "$out_dir/README.txt"
+            cleanup_retention "$FAILED_DIR" "$FAILED_RETENTION_DAYS"
         fi
     }
 
@@ -235,6 +250,9 @@
     for f in "$INPUT_DIR"/*.pdf "$INPUT_DIR"/*.PDF; do
         process_pdf "$f" || true
     done
+
+    cleanup_retention "$ARCHIVE_DIR" "$ARCHIVE_RETENTION_DAYS"
+    cleanup_retention "$FAILED_DIR" "$FAILED_RETENTION_DAYS"
 
     log "Watching $INPUT_DIR for new PDFs…"
     inotifywait -m -e close_write -e moved_to --format '%w%f' "$INPUT_DIR" | while read -r file; do

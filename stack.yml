@@ -10,6 +10,8 @@ services:
       - OUTPUT_DIR=/work/out
       - ARCHIVE_DIR=/work/archive
       - FAILED_DIR=/work/failed
+      - ARCHIVE_RETENTION_DAYS=30
+      - FAILED_RETENTION_DAYS=14
       - STABLE_SECONDS=2
 
       # Do both: clean page renders + organized raw assets

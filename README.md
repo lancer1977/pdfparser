@@ -23,6 +23,11 @@ This watcher supports:
 - `/work/archive` — processed PDFs are moved here
 - `/work/failed` — PDFs that error or produce no outputs
 
+## Retention policy
+- `ARCHIVE_RETENTION_DAYS` controls how long archived PDFs are kept before cleanup runs. Default: `30`
+- `FAILED_RETENTION_DAYS` controls how long failed PDFs are kept before cleanup runs. Default: `14`
+- Cleanup runs at startup and after each processed file
+
 ## Output layout per PDF
 `/work/out/<pdf-stem>/`
 - `pages/` — full rendered pages (`MODE=pages` or `MODE=both`)
@@ -48,6 +53,8 @@ This watcher supports:
 docker build -t polyhydra/poppler-watcher:1.2 .
 docker stack deploy -c stack.yml pdf
 ```
+
+The container includes a Docker `HEALTHCHECK` that verifies the watcher process is still the entrypoint.
 
 
 ## 📖 Documentation
